@@ -1,0 +1,70 @@
+import numpy as np
+import pandas as pd
+from scipy import stats
+import matplotlib.pyplot as plt
+
+# 1. Генерация данных для A/B теста
+def generate_ab_data(sample_size=10000, lift=0.05, conversion_rate=0.1, seed=42):
+    np.random.seed(seed)
+    # Группа A - контрольная
+    control = np.random.binomial(1, conversion_rate, sample_size)
+    # Группа B - тестовая с улучшением конверсии на lift
+    treatment = np.random.binomial(1, conversion_rate * (1 + lift), sample_size)
+    return control, treatment
+
+# 2. Анализ данных: подсчёт конверсий, среднего значения и статистик
+def analyze_results(control, treatment):
+    control_mean, treatment_mean = np.mean(control), np.mean(treatment)
+    control_sum, treatment_sum = np.sum(control), np.sum(treatment)
+    control_std, treatment_std = np.std(control), np.std(treatment)
+    
+    print(f"Control Mean (Conversion Rate): {control_mean:.4f} ({control_sum}/{len(control)})")
+    print(f"Treatment Mean (Conversion Rate): {treatment_mean:.4f} ({treatment_sum}/{len(treatment)})")
+    print("-" * 40)
+
+    # t-test для проверки статистической значимости
+    t_stat, p_value = stats.ttest_ind(treatment, control)
+    print(f"t-statistic: {t_stat:.4f}")
+    print(f"p-value: {p_value:.4f}")
+
+    # Вывод результата
+    if p_value < 0.05:
+        print("\nРезультат статистически значим: Вариант B улучшает метрику!\n")
+    else:
+        print("\nРезультат НЕ статистически значим: Различия случайны.\n")
+    return control_mean, treatment_mean, p_value
+
+# 3. Визуализация данных для лучшего понимания результатов
+def plot_results(control, treatment):
+    plt.figure(figsize=(8, 5))
+    labels = ['Control', 'Treatment']
+    means = [np.mean(control), np.mean(treatment)]
+    stds = [np.std(control), np.std(treatment)]
+
+    plt.bar(labels, means, yerr=stds, capsize=10, color=['blue', 'green'])
+    plt.title('A/B Test Results')
+    plt.ylabel('Conversion Rate')
+    plt.show()
+
+# 4. Функция для запуска A/B теста
+def run_ab_test(sample_size=10000, lift=0.05, conversion_rate=0.1):
+    print("\nA/B ТЕСТИРОВАНИЕ НАЧАЛО")
+    print(f"Sample Size: {sample_size} | Lift: {lift*100}% | Base Conversion Rate: {conversion_rate*100}%")
+    print("=" * 60)
+    
+    # Генерация данных
+    control, treatment = generate_ab_data(sample_size, lift, conversion_rate)
+    
+    # Анализ результатов
+    control_mean, treatment_mean, p_value = analyze_results(control, treatment)
+    
+    # Визуализация
+    plot_results(control, treatment)
+    print("A/B ТЕСТИРОВАНИЕ ЗАВЕРШЕНО")
+
+# 5. Запуск теста с параметрами
+def main():
+    run_ab_test(sample_size=10000, lift=0.03, conversion_rate=0.1)
+
+if __name__ == "__main__":
+    main()
